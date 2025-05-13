@@ -64,6 +64,9 @@
     "stop": "Dur",
     "warp": "Satır atla"
   },
+  "intentUnderstanding": {
+    "title": "Niyetinizi anlama ve analiz etme aşamasındayız..."
+  },
   "knowledgeBase": {
     "all": "Tüm İçerik",
     "allFiles": "Tüm Dosyalar",
@@ -116,6 +119,16 @@
       "outputText": "Metin çıkışı",
       "outputTitle": "Çıkış detayları",
       "reasoning": "Derin düşünme",
+      "speed": {
+        "tps": {
+          "title": "TPS",
+          "tooltip": "Token Başına Saniye, TPS. AI tarafından üretilen içeriğin ortalama hızını (Token/saniye) belirtir, ilk Token alındıktan sonra hesaplanmaya başlanır."
+        },
+        "ttft": {
+          "title": "TTFT",
+          "tooltip": "İlk Token'a Kadar Geçen Süre, TTFT. Mesajınızı göndermenizden, istemcinin ilk Token'ı almasına kadar geçen zaman aralığını belirtir."
+        }
+      },
       "title": "Üretim detayları",
       "total": "Toplam tüketim"
     }
@@ -144,7 +157,6 @@
         "desc": "Sohbet içeriğine göre akıllıca arama gerekip gerekmediğini belirler",
         "title": "Akıllı Bağlantı"
       },
-      "disable": "Mevcut model fonksiyon çağrısını desteklemediği için akıllı bağlantı özelliği kullanılamaz",
       "off": {
         "desc": "Sadece modelin temel bilgilerini kullanır, ağ araması yapmaz",
         "title": "Bağlantıyı Kapat"
@@ -154,6 +166,10 @@
         "title": "Her Zaman Bağlantıda"
       },
       "useModelBuiltin": "Modelin yerleşik arama motorunu kullan"
+    },
+    "searchModel": {
+      "desc": "Mevcut model fonksiyon çağrısını desteklemiyor, bu nedenle çevrimiçi arama yapmak için fonksiyon çağrısını destekleyen bir model ile birlikte kullanılması gerekiyor",
+      "title": "Arama Yardımcı Modeli"
     },
     "title": "Ağ Araması"
   },

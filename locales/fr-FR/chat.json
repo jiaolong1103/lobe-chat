@@ -64,6 +64,9 @@
     "stop": "Arrêter",
     "warp": "Saut de ligne"
   },
+  "intentUnderstanding": {
+    "title": "En train de comprendre et d'analyser votre intention..."
+  },
   "knowledgeBase": {
     "all": "Tout le contenu",
     "allFiles": "Tous les fichiers",
@@ -116,6 +119,16 @@
       "outputText": "Sortie texte",
       "outputTitle": "Détails de la sortie",
       "reasoning": "Raisonnement approfondi",
+      "speed": {
+        "tps": {
+          "title": "TPS",
+          "tooltip": "Tokens Par Seconde, TPS. Indique la vitesse moyenne de génération de contenu par l'IA (Token/seconde), calculée à partir de la réception du premier Token."
+        },
+        "ttft": {
+          "title": "TTFT",
+          "tooltip": "Temps Jusqu'au Premier Token, TTFT. Indique l'intervalle de temps entre l'envoi de votre message et la réception du premier Token par le client."
+        }
+      },
       "title": "Détails de génération",
       "total": "Total consommé"
     }
@@ -144,7 +157,6 @@
         "desc": "Détermine intelligemment si une recherche est nécessaire en fonction du contenu de la conversation",
         "title": "Connexion intelligente"
       },
-      "disable": "Le modèle actuel ne prend pas en charge l'appel de fonctions, donc la fonctionnalité de connexion intelligente est indisponible",
       "off": {
         "desc": "Utilise uniquement les connaissances de base du modèle, sans recherche en ligne",
         "title": "Déconnexion"
@@ -154,6 +166,10 @@
         "title": "Toujours connecté"
       },
       "useModelBuiltin": "Utiliser le moteur de recherche intégré du modèle"
+    },
+    "searchModel": {
+      "desc": "Le modèle actuel ne prend pas en charge les appels de fonction, il doit donc être associé à un modèle prenant en charge les appels de fonction pour effectuer une recherche en ligne",
+      "title": "Modèle d'assistance à la recherche"
     },
     "title": "Recherche en ligne"
   },

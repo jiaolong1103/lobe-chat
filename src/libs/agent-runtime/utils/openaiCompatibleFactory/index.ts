@@ -57,6 +57,7 @@ interface OpenAICompatibleFactoryOptions<T extends Record<string, any> = any> {
   apiKey?: string;
   baseURL?: string;
   chatCompletion?: {
+    excludeUsage?: boolean;
     handleError?: (
       error: any,
       options: ConstructorOptions<T>,
@@ -67,7 +68,7 @@ interface OpenAICompatibleFactoryOptions<T extends Record<string, any> = any> {
     ) => OpenAI.ChatCompletionCreateParamsStreaming;
     handleStream?: (
       stream: Stream<OpenAI.ChatCompletionChunk> | ReadableStream,
-      callbacks?: ChatStreamCallbacks,
+      { callbacks, inputStartAt }: { callbacks?: ChatStreamCallbacks; inputStartAt?: number },
     ) => ReadableStream;
     handleStreamBizErrorType?: (error: {
       message: string;
@@ -200,6 +201,7 @@ export const LobeOpenAICompatibleFactory = <T extends Record<string, any> = any>
 
     async chat({ responseMode, ...payload }: ChatStreamPayload, options?: ChatCompetitionOptions) {
       try {
+        const inputStartAt = Date.now();
         const postPayload = chatCompletion?.handlePayload
           ? chatCompletion.handlePayload(payload, this._options)
           : ({
@@ -224,12 +226,17 @@ export const LobeOpenAICompatibleFactory = <T extends Record<string, any> = any>
             ...postPayload,
             messages,
             ...(chatCompletion?.noUserId ? {} : { user: options?.user }),
-            stream_options: postPayload.stream ? { include_usage: true } : undefined,
+            stream_options:
+              postPayload.stream && !chatCompletion?.excludeUsage
+                ? { include_usage: true }
+                : undefined,
           };
 
           if (debug?.chatCompletion?.()) {
-            console.log('[requestPayload]:', JSON.stringify(finalPayload, null, 2));
+            console.log('[requestPayload]');
+            console.log(JSON.stringify(finalPayload), '\n');
           }
+
           response = await this.client.chat.completions.create(finalPayload, {
             // https://github.com/lobehub/lobe-chat/pull/318
             headers: { Accept: '*/*', ...options?.requestHeaders },
@@ -247,10 +254,17 @@ export const LobeOpenAICompatibleFactory = <T extends Record<string, any> = any>
             debugStream(useForDebugStream).catch(console.error);
           }
 
-          const streamHandler = chatCompletion?.handleStream || OpenAIStream;
-          return StreamingResponse(streamHandler(prod, streamOptions), {
-            headers: options?.headers,
-          });
+          return StreamingResponse(
+            chatCompletion?.handleStream
+              ? chatCompletion.handleStream(prod, {
+                  callbacks: streamOptions.callbacks,
+                  inputStartAt,
+                })
+              : OpenAIStream(prod, { ...streamOptions, inputStartAt }),
+            {
+              headers: options?.headers,
+            },
+          );
         }
 
         if (debug?.chatCompletion?.()) {
@@ -263,10 +277,17 @@ export const LobeOpenAICompatibleFactory = <T extends Record<string, any> = any>
           chatCompletion?.handleTransformResponseToStream || transformResponseToStream;
         const stream = transformHandler(response as unknown as OpenAI.ChatCompletion);
 
-        const streamHandler = chatCompletion?.handleStream || OpenAIStream;
-        return StreamingResponse(streamHandler(stream, streamOptions), {
-          headers: options?.headers,
-        });
+        return StreamingResponse(
+          chatCompletion?.handleStream
+            ? chatCompletion.handleStream(stream, {
+                callbacks: streamOptions.callbacks,
+                inputStartAt,
+              })
+            : OpenAIStream(stream, { ...streamOptions, inputStartAt }),
+          {
+            headers: options?.headers,
+          },
+        );
       } catch (error) {
         throw this.handleError(error);
       }
@@ -326,7 +347,7 @@ export const LobeOpenAICompatibleFactory = <T extends Record<string, any> = any>
     ): Promise<Embeddings[]> {
       try {
         const res = await this.client.embeddings.create(
-          { ...payload, user: options?.user },
+          { ...payload, encoding_format: 'float', user: options?.user },
           { headers: options?.headers, signal: options?.signal },
         );
 
@@ -339,7 +360,7 @@ export const LobeOpenAICompatibleFactory = <T extends Record<string, any> = any>
     async textToImage(payload: TextToImagePayload) {
       try {
         const res = await this.client.images.generate(payload);
-        return res.data.map((o) => o.url) as string[];
+        return (res.data || []).map((o) => o.url) as string[];
       } catch (error) {
         throw this.handleError(error);
       }

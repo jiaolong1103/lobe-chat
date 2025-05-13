@@ -1,7 +1,5 @@
-// sort-imports-ignore
-import '@anthropic-ai/sdk/shims/web';
-import Anthropic from '@anthropic-ai/sdk';
-import { ClientOptions } from 'openai';
+import Anthropic, { ClientOptions } from '@anthropic-ai/sdk';
+
 import type { ChatModelCard } from '@/types/llm';
 
 import { LobeRuntimeAI } from '../BaseAI';
@@ -12,10 +10,10 @@ import {
   ChatStreamPayload,
   ModelProvider,
 } from '../types';
+import { buildAnthropicMessages, buildAnthropicTools } from '../utils/anthropicHelpers';
 import { AgentRuntimeError } from '../utils/createError';
 import { debugStream } from '../utils/debugStream';
 import { desensitizeUrl } from '../utils/desensitizeUrl';
-import { buildAnthropicMessages, buildAnthropicTools } from '../utils/anthropicHelpers';
 import { StreamingResponse } from '../utils/response';
 import { AnthropicStream } from '../utils/streams';
 import { handleAnthropicError } from './handleAnthropicError';
@@ -24,6 +22,8 @@ export interface AnthropicModelCard {
   display_name: string;
   id: string;
 }
+
+const modelsWithSmallContextWindow = new Set(['claude-3-opus-20240229', 'claude-3-haiku-20240307']);
 
 const DEFAULT_BASE_URL = 'https://api.anthropic.com';
 
@@ -38,6 +38,10 @@ export class LobeAnthropicAI implements LobeRuntimeAI {
   apiKey?: string;
   private id: string;
 
+  private isDebug() {
+    return process.env.DEBUG_ANTHROPIC_CHAT_COMPLETION === '1';
+  }
+
   constructor({ apiKey, baseURL = DEFAULT_BASE_URL, id, ...res }: AnthropicAIParams = {}) {
     if (!apiKey) throw AgentRuntimeError.createError(AgentRuntimeErrorType.InvalidProviderAPIKey);
 
@@ -50,9 +54,19 @@ export class LobeAnthropicAI implements LobeRuntimeAI {
   async chat(payload: ChatStreamPayload, options?: ChatCompetitionOptions) {
     try {
       const anthropicPayload = await this.buildAnthropicPayload(payload);
+      const inputStartAt = Date.now();
+
+      if (this.isDebug()) {
+        console.log('[requestPayload]');
+        console.log(JSON.stringify(anthropicPayload), '\n');
+      }
 
       const response = await this.client.messages.create(
-        { ...anthropicPayload, stream: true },
+        {
+          ...anthropicPayload,
+          metadata: options?.user ? { user_id: options?.user } : undefined,
+          stream: true,
+        },
         {
           signal: options?.signal,
         },
@@ -60,13 +74,16 @@ export class LobeAnthropicAI implements LobeRuntimeAI {
 
       const [prod, debug] = response.tee();
 
-      if (process.env.DEBUG_ANTHROPIC_CHAT_COMPLETION === '1') {
+      if (this.isDebug()) {
         debugStream(debug.toReadableStream()).catch(console.error);
       }
 
-      return StreamingResponse(AnthropicStream(prod, options?.callback), {
-        headers: options?.headers,
-      });
+      return StreamingResponse(
+        AnthropicStream(prod, { callbacks: options?.callback, inputStartAt }),
+        {
+          headers: options?.headers,
+        },
+      );
     } catch (error) {
       throw this.handleError(error);
     }
@@ -100,9 +117,13 @@ export class LobeAnthropicAI implements LobeRuntimeAI {
 
     const postTools = buildAnthropicTools(tools, { enabledContextCaching });
 
-    if (!!thinking) {
-      const maxTokens =
-        max_tokens ?? (thinking?.budget_tokens ? thinking?.budget_tokens + 4096 : 4096);
+    if (!!thinking && thinking.type === 'enabled') {
+      // claude 3.7 thinking has max output of 64000 tokens
+      const maxTokens = !!max_tokens
+        ? thinking?.budget_tokens && thinking?.budget_tokens > max_tokens
+          ? Math.min(thinking?.budget_tokens + max_tokens, 64_000)
+          : max_tokens
+        : 64_000;
 
       // `temperature` may only be set to 1 when thinking is enabled.
       // `top_p` must be unset when thinking is enabled.
@@ -117,7 +138,9 @@ export class LobeAnthropicAI implements LobeRuntimeAI {
     }
 
     return {
-      max_tokens: max_tokens ?? 4096,
+      // claude 3 series model hax max output token of 4096, 3.x series has 8192
+      // https://docs.anthropic.com/en/docs/about-claude/models/all-models#:~:text=200K-,Max%20output,-Normal%3A
+      max_tokens: max_tokens ?? (modelsWithSmallContextWindow.has(model) ? 4096 : 8192),
       messages: postMessages,
       model,
       system: systemPrompts,

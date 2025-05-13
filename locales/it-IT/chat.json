@@ -64,6 +64,9 @@
     "stop": "Ferma",
     "warp": "A capo"
   },
+  "intentUnderstanding": {
+    "title": "Stiamo comprendendo e analizzando la tua intenzione..."
+  },
   "knowledgeBase": {
     "all": "Tutti i contenuti",
     "allFiles": "Tutti i file",
@@ -116,6 +119,16 @@
       "outputText": "Output testo",
       "outputTitle": "Dettagli output",
       "reasoning": "Ragionamento profondo",
+      "speed": {
+        "tps": {
+          "title": "TPS",
+          "tooltip": "Token Per Second, TPS. Indica la velocità media di generazione dei contenuti da parte dell'AI (Token/secondo), calcolata a partire dalla ricezione del primo Token."
+        },
+        "ttft": {
+          "title": "TTFT",
+          "tooltip": "Time To First Token, TTFT. Indica l'intervallo di tempo che intercorre tra l'invio del messaggio e la ricezione del primo Token da parte del client."
+        }
+      },
       "title": "Dettagli generati",
       "total": "Totale consumato"
     }
@@ -144,7 +157,6 @@
         "desc": "Determina intelligentemente se è necessario cercare in base al contenuto della conversazione",
         "title": "Collegamento intelligente"
       },
-      "disable": "Il modello attuale non supporta le chiamate di funzione, quindi non è possibile utilizzare la funzionalità di collegamento intelligente",
       "off": {
         "desc": "Utilizza solo la conoscenza di base del modello, senza effettuare ricerche online",
         "title": "Disattiva collegamento"
@@ -154,6 +166,10 @@
         "title": "Collegamento sempre attivo"
       },
       "useModelBuiltin": "Utilizza il motore di ricerca integrato del modello"
+    },
+    "searchModel": {
+      "desc": "Il modello attuale non supporta le chiamate di funzione, quindi è necessario utilizzarlo insieme a un modello che supporti le chiamate di funzione per cercare online",
+      "title": "Modello di ricerca assistita"
     },
     "title": "Ricerca online"
   },
