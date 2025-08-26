@@ -1,19 +1,16 @@
 ---
-description: 
-globs: 
 alwaysApply: true
 ---
+
 ## Project Description
 
-You are developing an open-source, modern-design AI chat framework: lobe chat. 
+You are developing an open-source, modern-design AI chat framework: lobe chat.
 
-Emoji logo: 🤯 
-
+Emoji logo: 🤯
 
 ## Project Technologies Stack
 
 read [package.json](mdc:package.json) to know all npm packages you can use.
-read [folder-structure.mdx](mdc:docs/development/basic/folder-structure.mdx) to learn project structure.
 
 The project uses the following technologies:
 
